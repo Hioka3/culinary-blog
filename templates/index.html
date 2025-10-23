@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Кулинарный блог</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Кулинарный блог</h1>
+
+        <form id="recipe-form" action="/api/recipes" method="post" enctype="multipart/form-data">
+            <input type="text" name="title" placeholder="Название блюда" required>
+            <textarea name="ingredients" placeholder="Ингредиенты" required></textarea>
+            <textarea name="instructions" placeholder="Инструкция" required></textarea>
+            <select name="meal_type" required>
+                <option value="Завтрак">Завтрак</option>
+                <option value="Обед">Обед</option>
+                <option value="Ужин">Ужин</option>
+                <option value="Десерт">Десерт</option>
+                <option value="Закуска">Закуска</option>
+            </select>
+            <input type="file" name="image">
+            <button type="submit">Добавить рецепт</button>
+        </form>
+
+        <h2>Рецепты</h2>
+        <div id="recipes"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("recipe-form");
+            const recipesDiv = document.getElementById("recipes");
+
+            function loadRecipes() {
+                fetch("/api/recipes")
+                    .then(res => res.json())
+                    .then(data => {
+                        recipesDiv.innerHTML = "";
+                        data.forEach(r => {
+                            const card = document.createElement("div");
+                            card.className = "recipe-card";
+                            card.innerHTML = `
+                                <h3>${r.title}</h3>
+                                <p><b>Тип:</b> ${r.meal_type}</p>
+                                <p><b>Ингредиенты:</b> ${r.ingredients}</p>
+                                <p><b>Инструкция:</b> ${r.instructions}</p>
+                                ${r.image_url ? `<img src="${r.image_url}" alt="${r.title}" width="200">` : ""}
+                                <hr>
+                            `;
+                            recipesDiv.appendChild(card);
+                        });
+                    });
+            }
+
+            form.addEventListener("submit", e => {
+                e.preventDefault();
+                const formData = new FormData(form);
+
+                fetch("/api/recipes", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "ok") {
+                        form.reset();
+                        loadRecipes();
+                    } else {
+                        alert("Ошибка при добавлении рецепта!");
+                    }
+                });
+            });
+
+            loadRecipes(); 
+        });
+    </script>
+</body>
+</html>
